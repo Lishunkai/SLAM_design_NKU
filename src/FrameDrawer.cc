@@ -198,8 +198,8 @@ cv::Mat FrameDrawer::DrawSparseDepthMap()
                 // 因此，用.at<double>(a,b)访问的时候，很可能该处内存值不是你想要的值，这可能就是读取的值非常大或非常小的原因。
                 // 而且这些变量在多线程实现中都用mutex保护起来了，当你访问该变量的时候，可能它不允许你访问。这可能就是segmentation fault的原因。
 
-                int A = Depth[i]*65;
-                int B = 225-Depth[i]*15;
+                int A = Depth[i]*50;
+                int B = 225-Depth[i]*10;
                 std::cout<<Depth[i]<<"  "<<A<<"  "<<B<<std::endl;
                 cv::circle(im,vCurrentKeys[i].pt,2,cv::Scalar(A,0,B),-1); // 绿
             // else
