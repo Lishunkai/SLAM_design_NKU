@@ -134,7 +134,7 @@ cv::Mat FrameDrawer::DrawFrame()
 // 画这一帧的稀疏深度图
 cv::Mat FrameDrawer::DrawSparseDepthMap()
 {
-    cv::Mat im = cv::Mat(480,640,CV_8UC3, cv::Scalar(0,0,0));
+    cv::Mat im = cv::Mat(376,1241,CV_8UC3, cv::Scalar(0,0,0));
     vector<cv::KeyPoint> vIniKeys; // Initialization: KeyPoints in reference frame
     vector<int> vMatches; // Initialization: correspondeces with reference keypoints
     vector<cv::KeyPoint> vCurrentKeys; // KeyPoints in current frame
@@ -198,8 +198,8 @@ cv::Mat FrameDrawer::DrawSparseDepthMap()
                 // 因此，用.at<double>(a,b)访问的时候，很可能该处内存值不是你想要的值，这可能就是读取的值非常大或非常小的原因。
                 // 而且这些变量在多线程实现中都用mutex保护起来了，当你访问该变量的时候，可能它不允许你访问。这可能就是segmentation fault的原因。
 
-                int A = 225-Depth[i]*10;
-                int B = 225-Depth[i]*10;
+                int A = 225-Depth[i]*4;
+                int B = 225-Depth[i]*4;
                 cv::circle(im,vCurrentKeys[i].pt,2,cv::Scalar(225,A,B),-1); // 绿
             // else
             //     cv::circle(im,vCurrentKeys[i].pt,3,cv::Scalar(0,0,255),-1); // 红

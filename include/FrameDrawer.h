@@ -48,11 +48,11 @@ public:
     // Draw last processed frame.
     cv::Mat DrawFrame();
 
-    cv::Mat DrawSparseDepthMap(); // 绘制稀疏深度图
-    
-    vector<cv::Mat> WorldPosOfCurrentMapPoints; // 当前帧能看到的map points的坐标。是3*1的坐标列向量
+    cv::Mat DrawSparseDepthMap();
 
-protected:    
+    vector<float> Depth; // 当前帧能看到的所有map points相对于相机中心的深度
+
+protected:
 
     void DrawTextInfo(cv::Mat &im, int nState, cv::Mat &imText);
 
