@@ -134,7 +134,7 @@ cv::Mat FrameDrawer::DrawFrame()
 // 画这一帧的稀疏深度图
 cv::Mat FrameDrawer::DrawSparseDepthMap()
 {
-    cv::Mat im = cv::Mat(376,1241,CV_8UC3, cv::Scalar(0,0,0));
+    cv::Mat im = cv::Mat(480,640,CV_8UC3, cv::Scalar(0,0,0));
     vector<cv::KeyPoint> vIniKeys; // Initialization: KeyPoints in reference frame
     vector<int> vMatches; // Initialization: correspondeces with reference keypoints
     vector<cv::KeyPoint> vCurrentKeys; // KeyPoints in current frame
@@ -175,11 +175,6 @@ cv::Mat FrameDrawer::DrawSparseDepthMap()
     {
         mnTracked=0;
         const int n = vCurrentKeys.size(); // number of KeyPoints in the current frame
-        cv::Mat Twc = PoseTcw.inv(); // world to camera
-        cv::Mat CamCoorOfPoints;
-        cv::Mat WP(3,1,CV_64FC1,cv::Scalar(1));
-        cv::Mat WP2(4,1,CV_64FC1,cv::Scalar(1));
-        // cv::Mat WP3(4,1,CV_64F);
 
         // 针对每个ORB特征点，画深度
         for(int i=0;i<n;i++)
@@ -187,35 +182,31 @@ cv::Mat FrameDrawer::DrawSparseDepthMap()
             if(vbVO[i] || vbMap[i])
             // vbVO[i] and vbMap[i] are tracked MapPoints in current frame
             // A match to a MapPoint (vbMap[i]) in the map, or a match to a "visual odometry" MapPoint (vbVO[i]) created in the last frame
-            {
-                
-                // WP = WorldPosOfCurrentMapPoints[i];
-                assert(WorldPosOfCurrentMapPoints[i].at<float>(0));
-                double A = WorldPosOfCurrentMapPoints[i].at<float>(0);
-                std::cout<<A<<"  ";
-                assert(WorldPosOfCurrentMapPoints[i].at<float>(1));
-                double B = WorldPosOfCurrentMapPoints[i].at<float>(1);
-                std::cout<<B<<"  ";
-                assert(WorldPosOfCurrentMapPoints[i].at<float>(2));
-                double C = WorldPosOfCurrentMapPoints[i].at<float>(2);
-                std::cout<<C<<"  ";
-                // WP2 = WP;
-                std::cout<<i<<std::endl;
-                
-                // 老是有问题！！！！！！！！！！！！！！！！！！！！！！
-                // 有可能是因为有的点的坐标没有值，具体看一下报错的内容。
+            {   
+                // 这里的bug调了7个小时才调出来。
+                // 原来的写法是：
+                // vector<cv::Mat> WorldPosOfCurrentMapPoints;
+                // WorldPosOfCurrentMapPoints[i].push_back(pTracker->mCurrentFrame.mvpMapPoints[i]->GetWorldPos());
+                // 即：将特征点的世界坐标储存在 WorldPosOfCurrentMapPoints[i]中;
+                // 这样操作的结果是：WorldPosOfCurrentMapPoints[i]可以直接输出，但无法访问其矩阵的元素，错误类型为segmentation fault，或值非常大/小。
+                // 这是一个非常奇怪的问题。我调了很长时间，最终觉得原因很可能是：
+                // pTracker->mCurrentFrame.mvpMapPoints[i]->GetWorldPos()中的东西都是和指针有关的，即*和&。
+                // 这样在通过push_back()函数，将GetWorldPos()赋值给WorldPosOfCurrentMapPoints[i]的时候，相当于把GetWorldPos()的数据类型也赋值给WorldPosOfCurrentMapPoints[i]了
+                // *和&的特点是，它们都指向同一个内存空间，只是变量的别名不同。对任何别名的改动，都会造成对该内存中值的改动。
+                // 这样以来，WorldPosOfCurrentMapPoints[i]可以通过cout查看，但如果用.at<double>(a,b)读取的时候，就一定会出问题。
+                // 因为pTracker、mCurrentFrame、mvpMapPoints其实都是在别处不断使用、更新的变量，更重要的是它们在不同的线程中。
+                // 因此，用.at<double>(a,b)访问的时候，很可能该处内存值不是你想要的值，这可能就是读取的值非常大或非常小的原因。
+                // 而且这些变量在多线程实现中都用mutex保护起来了，当你访问该变量的时候，可能它不允许你访问。这可能就是segmentation fault的原因。
 
-
-                // cv::Mat CamCoorOfPoints;
-                // CamCoorOfPoints = Twc.rowRange(0,2).colRange(0,3) * WP;
-
-                cv::circle(im,vCurrentKeys[i].pt,2,cv::Scalar(0,255,0),-1); // 绿
+                int A = 225-Depth[i]*10;
+                int B = 225-Depth[i]*10;
+                cv::circle(im,vCurrentKeys[i].pt,2,cv::Scalar(225,A,B),-1); // 绿
             // else
             //     cv::circle(im,vCurrentKeys[i].pt,3,cv::Scalar(0,0,255),-1); // 红
             }
         }
 
-        WorldPosOfCurrentMapPoints.clear(); // 清空数组
+        Depth.clear(); // 清空数组  一定要清空，否则数组会越变越大，访问的时候下标也容易有错
     }
 
     cv::Mat imWithInfo;
@@ -281,7 +272,8 @@ void FrameDrawer::Update(Tracking *pTracker)
     }
     else if(pTracker->mLastProcessedState==Tracking::OK)
     {
-        cv::Mat PointWorldPos(3,1,CV_64F);
+        cv::Mat CameraCenter = (pTracker->mCurrentFrame).GetCameraCenter();
+        
         for(int i=0;i<N;i++)
         {
             MapPoint* pMP = pTracker->mCurrentFrame.mvpMapPoints[i];
@@ -289,8 +281,14 @@ void FrameDrawer::Update(Tracking *pTracker)
             if(pMP)
             {
                 // 将当前能看到的所有MapPoint的世界坐标保存下来
-                PointWorldPos = pTracker->mCurrentFrame.mvpMapPoints[i]->GetWorldPos();
-                WorldPosOfCurrentMapPoints.push_back(PointWorldPos);
+                // PointWorldPos = pTracker->mCurrentFrame.mvpMapPoints[i]->GetWorldPos();
+                // PosX.push_back((pTracker->mCurrentFrame.mvpMapPoints[i]->GetWorldPos()).at<double>(0,0));
+                // PosY.push_back((pTracker->mCurrentFrame.mvpMapPoints[i]->GetWorldPos()).at<double>(1,0));
+                // PosZ.push_back((pTracker->mCurrentFrame.mvpMapPoints[i]->GetWorldPos()).at<double>(2,0));
+
+                cv::Mat PC = ((pTracker->mCurrentFrame).mvpMapPoints[i])->GetWorldPos() - CameraCenter;
+                float dist = cv::norm(PC); // 计算范数
+                Depth.push_back(dist);
                 // 以上两句话放在if的作用域中，是为了保证pMP是有定义的，否则pMP可能是一个空指针，导致core dumped
                 
                 if(!pTracker->mCurrentFrame.mvbOutlier[i])
@@ -303,7 +301,7 @@ void FrameDrawer::Update(Tracking *pTracker)
             }
             else // 若地图点是未定义的，则保存初始值
             {
-                WorldPosOfCurrentMapPoints.push_back(PointWorldPos);
+                Depth.push_back(0);
             }
         }
     }
