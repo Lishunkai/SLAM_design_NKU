@@ -18,13 +18,19 @@
 * along with ORB-SLAM2. If not, see <http://www.gnu.org/licenses/>.
 */
 
-
-
 #include "System.h"
 #include "Converter.h"
 #include <thread>
 #include <pangolin/pangolin.h>
 #include <iomanip>
+#include<ctime> // 用于计算字典读入的时间
+
+// 判断文件格式
+bool has_suffix(const std::string &str, const std::string &suffix)
+{
+  std::size_t index = str.find(suffix, str.size() - suffix.size());
+  return (index != std::string::npos);
+}
 
 namespace ORB_SLAM2
 {
@@ -60,6 +66,26 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
 
     //Load ORB Vocabulary
     cout << endl << "Loading ORB Vocabulary. This could take a while..." << endl;
+    double t;
+    t = clock(); //算法开始时间
+
+    mpVocabulary = new ORBVocabulary();
+
+    bool bVocLoad = false; // choose loading method
+    if(has_suffix(strVocFile, ".txt"))
+        bVocLoad = mpVocabulary->loadFromTextFile(strVocFile);
+    else if(has_suffix(strVocFile, ".bin"))
+        bVocLoad = mpVocabulary->loadFromBinaryFile(strVocFile);
+    else
+        bVocLoad = false;
+    if(!bVocLoad)
+    {
+        cerr << "Wrong path to vocabulary." << endl;
+        exit(-1);
+    }
+
+    t = (double)((clock()-t)/CLOCKS_PER_SEC); // 算法从开始到结束消耗的时间
+    cout << "Vocabulary loaded! It takes " << t << " seconds" << endl << endl;
 
     mpVocabulary = new ORBVocabulary();
     bool bVocLoad = mpVocabulary->loadFromTextFile(strVocFile);
