@@ -87,8 +87,6 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
     t = (double)((clock()-t)/CLOCKS_PER_SEC); // 算法从开始到结束消耗的时间
     cout << "Vocabulary loaded! It takes " << t << " seconds" << endl << endl;
 
-    mpVocabulary = new ORBVocabulary();
-    bool bVocLoad = mpVocabulary->loadFromTextFile(strVocFile);
     if(!bVocLoad)
     {
         cerr << "Wrong path to vocabulary. " << endl;
