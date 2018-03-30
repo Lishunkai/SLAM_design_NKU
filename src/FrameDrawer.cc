@@ -198,10 +198,36 @@ cv::Mat FrameDrawer::DrawSparseDepthMap()
                 // 因此，用.at<double>(a,b)访问的时候，很可能该处内存值不是你想要的值，这可能就是读取的值非常大或非常小的原因。
                 // 而且这些变量在多线程实现中都用mutex保护起来了，当你访问该变量的时候，可能它不允许你访问。这可能就是segmentation fault的原因。
 
-                int A = Depth[i]*50;
-                int B = 225-Depth[i]*10;
-                std::cout<<Depth[i]<<"  "<<A<<"  "<<B<<std::endl;
-                cv::circle(im,vCurrentKeys[i].pt,2,cv::Scalar(A,0,B),-1); // 绿
+                // int A = Depth[i]*50;
+                // int B = 225-Depth[i]*10;
+                // std::cout<<Depth[i]<<"  "<<A<<"  "<<B<<std::endl;
+                // cv::circle(im,vCurrentKeys[i].pt,2,cv::Scalar(A,0,B),-1); // 绿
+
+                float id = Depth[i]/6;
+                int icP = (id*8);
+                float ifP = (id*8)-icP;
+
+                // std::cout<<"Depth["<<i<<"]/10: "<<id<<std::endl;
+
+                if(icP == 0)
+                    cv::circle(im,vCurrentKeys[i].pt,2,cv::Scalar(0,0,255*(0.5+0.5*ifP)),-1);
+                else if(icP == 1)
+                    cv::circle(im,vCurrentKeys[i].pt,2,cv::Scalar(0,255*(0.5*ifP),255),-1);
+                else if(icP == 2)
+                    cv::circle(im,vCurrentKeys[i].pt,2,cv::Scalar(0,255*(0.5+0.5*ifP),255),-1);
+                else if(icP == 3)
+                    cv::circle(im,vCurrentKeys[i].pt,2,cv::Scalar(255*(0.5*ifP),255,255*(1-0.5*ifP)),-1);
+                else if(icP == 4)
+                    cv::circle(im,vCurrentKeys[i].pt,2,cv::Scalar(255*(0.5+0.5*ifP),255,255*(0.5-0.5*ifP)),-1);
+                else if(icP == 5)
+                    cv::circle(im,vCurrentKeys[i].pt,2,cv::Scalar(255,255*(1-0.5*ifP),0),-1);
+                else if(icP == 6)
+                    cv::circle(im,vCurrentKeys[i].pt,2,cv::Scalar(255,255*(0.5-0.5*ifP),0),-1);
+                else if(icP == 7)
+                    cv::circle(im,vCurrentKeys[i].pt,2,cv::Scalar(255*(1-0.5*ifP),0,0),-1);
+                else
+                    cv::circle(im,vCurrentKeys[i].pt,2,cv::Scalar(255,255,255),-1);
+
             // else
             //     cv::circle(im,vCurrentKeys[i].pt,3,cv::Scalar(0,0,255),-1); // 红
             }
