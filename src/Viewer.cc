@@ -57,7 +57,7 @@ void Viewer::Run()
     mbFinished = false;
     mbStopped = false;
 
-    pangolin::CreateWindowAndBind("ORB-SLAM2: Map Viewer",1024,768);
+    pangolin::CreateWindowAndBind("SLAM-NKU-design: Map Viewer",1024,768);
 
     // 3D Mouse handler requires depth testing to be enabled
     glEnable(GL_DEPTH_TEST);
@@ -88,7 +88,7 @@ void Viewer::Run()
     pangolin::OpenGlMatrix Twc;
     Twc.SetIdentity();
 
-    cv::namedWindow("ORB-SLAM2: Current Frame");
+    cv::namedWindow("SLAM_NKU_design");
     cv::namedWindow("sparse depth map");
 
     bool bFollow = true;
@@ -137,7 +137,7 @@ void Viewer::Run()
         pangolin::FinishFrame();
 
         cv::Mat im = mpFrameDrawer->DrawFrame(); // 在opencv的窗口上画图
-        cv::imshow("ORB-SLAM2: Current Frame",im);
+        cv::imshow("SLAM_NKU_design",im);
         cv::Mat imSparseDepth = mpFrameDrawer->DrawSparseDepthMap(); // 在opencv的窗口上画图
         cv::imshow("sparse depth map",imSparseDepth);
         cv::waitKey(mT);
