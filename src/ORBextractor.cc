@@ -591,6 +591,7 @@ vector<cv::KeyPoint> ORBextractor::DistributeOctTree(const vector<cv::KeyPoint>&
     vector<pair<int,ExtractorNode*> > vSizeAndPointerToNode;
     vSizeAndPointerToNode.reserve(lNodes.size()*4);
 
+    // 根据兴趣点分布,利用N叉树方法对图像进行划分区域
     while(!bFinish)
     {
         iteration++;
@@ -762,11 +763,13 @@ vector<cv::KeyPoint> ORBextractor::DistributeOctTree(const vector<cv::KeyPoint>&
     return vResultKeys;
 }
 
+// 计算金字塔每层图像中的ORB特征点，在计算之前先将图片网格化。
+// 详细解读见：https://www.cnblogs.com/JingeTU/p/6438968.html
 void ORBextractor::ComputeKeyPointsOctTree(vector<vector<KeyPoint> >& allKeypoints)
 {
     allKeypoints.resize(nlevels);
 
-    const float W = 30;
+    const float W = 30; // 和单元格数有关，默认为30。W越大，ORB提取时对图片分的网格数越少，反之越多。
 
     for (int level = 0; level < nlevels; ++level)
     {
@@ -806,6 +809,8 @@ void ORBextractor::ComputeKeyPointsOctTree(vector<vector<KeyPoint> >& allKeypoin
                     maxX = maxBorderX;
 
                 vector<cv::KeyPoint> vKeysCell;
+                // 关于OpenCV中FAST函数代码的详细解释：
+                // https://blog.csdn.net/zhaocj/article/details/40301561
                 FAST(mvImagePyramid[level].rowRange(iniY,maxY).colRange(iniX,maxX),
                      vKeysCell,iniThFAST,true);
 

@@ -134,7 +134,12 @@ cv::Mat FrameDrawer::DrawFrame()
 // 画这一帧的稀疏深度图
 cv::Mat FrameDrawer::DrawSparseDepthMap()
 {
-    cv::Mat im = cv::Mat(376,1241,CV_8UC3, cv::Scalar(0,0,0));
+    // EuRoC
+    cv::Mat im = cv::Mat(480,752,CV_8UC3, cv::Scalar(0,0,0));
+    
+    // KITTI
+    // cv::Mat im = cv::Mat(376,1241,CV_8UC3, cv::Scalar(0,0,0));
+    
     vector<cv::KeyPoint> vIniKeys; // Initialization: KeyPoints in reference frame
     vector<int> vMatches; // Initialization: correspondeces with reference keypoints
     vector<cv::KeyPoint> vCurrentKeys; // KeyPoints in current frame
@@ -176,6 +181,8 @@ cv::Mat FrameDrawer::DrawSparseDepthMap()
         mnTracked=0;
         const int n = vCurrentKeys.size(); // number of KeyPoints in the current frame
 
+        int n_points = 0;
+
         // 针对每个ORB特征点，画深度
         for(int i=0;i<n;i++)
         {
@@ -203,7 +210,25 @@ cv::Mat FrameDrawer::DrawSparseDepthMap()
                 // std::cout<<Depth[i]<<"  "<<A<<"  "<<B<<std::endl;
                 // cv::circle(im,vCurrentKeys[i].pt,2,cv::Scalar(A,0,B),-1); // 绿
 
-                float id = Depth[i]/6;
+                n_points++;
+
+                // // 针对单目-kitti的参数
+                // float id = Depth[i]/6;
+                // int icP = (id*8);
+                // float ifP = (id*8)-icP;
+
+                // // 针对双目-kitti的参数
+                // float id = Depth[i]/70;
+                // int icP = (id*8);
+                // float ifP = (id*8)-icP;
+
+                // // 针对双目-euroc的参数
+                // float id = Depth[i]/6;
+                // int icP = (id*8);
+                // float ifP = (id*8)-icP;
+
+                // 针对单目-euroc的参数
+                float id = Depth[i]/3;
                 int icP = (id*8);
                 float ifP = (id*8)-icP;
 
@@ -232,6 +257,8 @@ cv::Mat FrameDrawer::DrawSparseDepthMap()
             //     cv::circle(im,vCurrentKeys[i].pt,3,cv::Scalar(0,0,255),-1); // 红
             }
         }
+
+        std::cout<<"【 "<<n_points<<" n_points in the image 】"<<std::endl;
 
         Depth.clear(); // 清空数组  一定要清空，否则数组会越变越大，访问的时候下标也容易有错
     }
